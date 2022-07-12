@@ -1,7 +1,4 @@
 import os
 
-APP_ID = 218336
-with open(
-    os.path.normpath(os.path.expanduser("~/.certs/github/school-of-data-key.pem"))
-) as cert_file:
-    APP_KEY = cert_file.read()
+APP_ID = os.getenv("GH_APP_ID")
+APP_KEY = os.getenv("GH_APP_KEY")
