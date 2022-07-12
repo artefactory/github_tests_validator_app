@@ -1,8 +1,8 @@
 import uvicorn
 from fastapi import FastAPI, Request
 from github import Github, GithubIntegration
-from github_tests_valaidator_app.constants import APP_ID, APP_KEY
-from github_tests_valaidator_app.utils import get_hash_files
+from github_tests_validator_app.constants import APP_ID, APP_KEY
+from github_tests_validator_app.utils import get_hash_files
 
 app = FastAPI()
 
@@ -13,7 +13,7 @@ git_integration = GithubIntegration(
 
 
 @app.post("/")
-async def main(request: Request):
+async def main(request: Request) -> None:
     payload = await request.json()
 
     if payload["action"] not in ["opened", "synchronize"]:
