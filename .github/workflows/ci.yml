@@ -56,4 +56,6 @@ jobs:
 
     - name: Run tests
       run: |
+        mkdir ~/.certs/github/
+        touch school-of-data-key.pem
         make test
