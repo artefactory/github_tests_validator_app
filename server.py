@@ -1,6 +1,6 @@
 import uvicorn
 from fastapi import FastAPI, Request
-from github import Github, GithubIntegration
+from github import GithubIntegration
 from github_tests_validator_app.constants import (
     APP_ID,
     APP_KEY,
@@ -27,18 +27,15 @@ async def main(request: Request) -> None:
 
     owner = payload["repository"]["owner"]["login"]
     repo_name = payload["repository"]["name"]
+    token = git_intergration.get_access_token(
+        git_intergration.get_installation(owner, repo_name).id
+    ).token
 
-    git_connection = Github(
-        login_or_token=git_intergration.get_access_token(
-            git_intergration.get_installation(owner, repo_name).id
-        ).token
+    student_hash_tests = get_tests_hash(token, owner, repo_name)
+
+    solution_hash_tests = get_tests_hash(
+        SOLUTION_TESTS_ACCESS_TOKEN, SOLUTION_OWNER, SOLUTION_REPO_NAME
     )
-
-    student_hash_tests = get_tests_hash(git_connection, owner, repo_name)
-
-    g = Github(SOLUTION_TESTS_ACCESS_TOKEN)
-
-    solution_hash_tests = get_tests_hash(g, SOLUTION_OWNER, SOLUTION_REPO_NAME)
 
     print(student_hash_tests)
     print(solution_hash_tests)
