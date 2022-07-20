@@ -7,12 +7,13 @@ from github_tests_validator_app.constants import (
     SOLUTION_OWNER,
     SOLUTION_REPO_NAME,
     SOLUTION_TESTS_ACCESS_TOKEN,
+    TESTS_FOLDER_NAME,
 )
-from github_tests_validator_app.utils import get_tests_hash
+from github_tests_validator_app.utils import compare_tests_folder, get_repo
 
 app = FastAPI()
 
-git_intergration = GithubIntegration(
+git_integration = GithubIntegration(
     APP_ID,
     APP_KEY,
 )
@@ -27,18 +28,15 @@ async def main(request: Request) -> None:
 
     owner = payload["repository"]["owner"]["login"]
     repo_name = payload["repository"]["name"]
-    token = git_intergration.get_access_token(
-        git_intergration.get_installation(owner, repo_name).id
+    token = git_integration.get_access_token(
+        git_integration.get_installation(owner, repo_name).id
     ).token
 
-    student_hash_tests = get_tests_hash(token, owner, repo_name)
+    student_repo = get_repo(token, owner, repo_name)
+    solution_repo = get_repo(SOLUTION_TESTS_ACCESS_TOKEN, SOLUTION_OWNER, SOLUTION_REPO_NAME)
 
-    solution_hash_tests = get_tests_hash(
-        SOLUTION_TESTS_ACCESS_TOKEN, SOLUTION_OWNER, SOLUTION_REPO_NAME
-    )
-
-    print(student_hash_tests)
-    print(solution_hash_tests)
+    tests_havent_changed = compare_tests_folder(student_repo, solution_repo)
+    print(tests_havent_changed)
 
     return
 
