@@ -45,9 +45,9 @@ def get_last_hash_commit(repo: Repository.Repository, branch_name: str) -> str:
 
 
 def compare_tests_folder(
-    student_repo: Repository.Repository, solution_repo: Repository.Repository
+    student_repo: Repository.Repository, solution_repo: Repository.Repository, student_branch_repo: str
 ) -> bool:
-    student_contents = student_repo.get_contents(TESTS_FOLDER_NAME)
+    student_contents = student_repo.get_contents(TESTS_FOLDER_NAME, ref=student_branch_repo)
 
     if (
         isinstance(student_contents, ContentFile.ContentFile)
