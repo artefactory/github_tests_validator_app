@@ -1,13 +1,14 @@
+from typing import Any
+
 import uvicorn
-from fastapi import FastAPI, Request
-
 from bin.github_validator_app import github_validator_repo
-
+from fastapi import FastAPI, Request
 
 app = FastAPI()
 
+
 @app.post("/")
-async def main(request: Request) -> None:
+async def main(request: Request) -> Any:
     payload = await request.json()
 
     tests_havent_changed = github_validator_repo(payload)

@@ -1,11 +1,10 @@
-import hashlib
-from typing import List, Any
-from github import Github, Repository, ContentFile
+from typing import Any, List
 
+from github import ContentFile, Github, Repository
 from lib.utils import get_hash_files
 
-class GithubConnector():
 
+class GithubConnector:
     def __init__(self, token: str, owner: str, repo_name: str):
         self.OWNER = owner
         self.REPO_NAME = repo_name
@@ -33,20 +32,10 @@ class GithubConnector():
                 contents.extend(self.repo.get_contents(file_content.path))
             else:
                 files_content.append(file_content)
-        return
+        return files_content
 
     def get_tests_hash(self, folder_name: str) -> str:
         contents = self.repo.get_contents(folder_name)
-        files_content = self.get_files_content(contents, self.repo)
-        hash = get_hash_files(files_content)
+        files_content = self.get_files_content(contents)
+        hash = str(get_hash_files(files_content))
         return hash
-
-    def get_files_content(self, contents: Any) -> List[ContentFile.ContentFile]:
-        files_content = []
-        while contents:
-            file_content = contents.pop(0)
-            if file_content.type == "dir":
-                contents.extend(self.repo.get_contents(file_content.path))
-            else:
-                files_content.append(file_content)
-        return files_content

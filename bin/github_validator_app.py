@@ -1,4 +1,5 @@
-from github import GithubIntegration, ContentFile
+from typing import Any, Dict, Tuple
+
 from config import (
     APP_ID,
     APP_KEY,
@@ -7,7 +8,7 @@ from config import (
     SOLUTION_TESTS_ACCESS_TOKEN,
     TESTS_FOLDER_NAME,
 )
-
+from github import ContentFile, GithubIntegration
 from lib.connectors.github_connector import GithubConnector
 
 git_integration = GithubIntegration(
@@ -15,12 +16,10 @@ git_integration = GithubIntegration(
     APP_KEY,
 )
 
-triggers = {
-    'pull_request': ['pull_request', 'head', 'ref'],
-    'pusher': ['ref']
-}
+triggers = {"pull_request": ["pull_request", "head", "ref"], "pusher": ["ref"]}
 
-def get_student_branch(payload: dict = None):
+
+def get_student_branch(payload: Dict[str, Any]) -> Any:
     for trigger in triggers:
         if trigger in payload:
             branch = payload
@@ -31,7 +30,7 @@ def get_student_branch(payload: dict = None):
     return None
 
 
-def get_student_creds(payload: dict = None):
+def get_student_creds(payload: Dict[str, Any]) -> Tuple[str, str, str]:
 
     owner = payload["repository"]["owner"]["login"]
     repo_name = payload["repository"]["name"]
@@ -43,7 +42,7 @@ def get_student_creds(payload: dict = None):
 
 def compare_tests_folder(
     student_repo: GithubConnector, solution_repo: GithubConnector, student_branch_repo: str
-) -> bool:
+) -> Any:
 
     student_contents = student_repo.repo.get_contents(TESTS_FOLDER_NAME, ref=student_branch_repo)
 
@@ -60,7 +59,7 @@ def compare_tests_folder(
     return student_hash_tests == solution_hash_tests
 
 
-def github_validator_repo(payload: dict):
+def github_validator_repo(payload: Dict[str, Any]) -> Any:
 
     student_owner, student_repo_name, student_token = get_student_creds(payload)
     student_github = GithubConnector(student_token, student_owner, student_repo_name)
@@ -70,9 +69,11 @@ def github_validator_repo(payload: dict):
         # FIXME
         # Archive the payload
         # FIXME
-        print('Could\'nt find the student commit, maybe the trigger is not managed')
+        # print("Could'nt find the student commit, maybe the trigger is not managed")
         return False
-    solution_github = GithubConnector(SOLUTION_TESTS_ACCESS_TOKEN, SOLUTION_OWNER, SOLUTION_REPO_NAME)
+    solution_github = GithubConnector(
+        SOLUTION_TESTS_ACCESS_TOKEN, SOLUTION_OWNER, SOLUTION_REPO_NAME
+    )
 
     # Valide of repo
     tests_havent_changed = compare_tests_folder(student_github, solution_github, student_branch)
