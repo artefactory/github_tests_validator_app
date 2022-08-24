@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI, Request
 
-from github_management.github_validator_app import github_validator_repo
+from bin.github_validator_app import github_validator_repo
 
 
 app = FastAPI()
