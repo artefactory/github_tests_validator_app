@@ -1,7 +1,7 @@
 from typing import Any
 
 import uvicorn
-from bin.github_validator_app import github_validator_repo
+from bin.validator import validator
 from fastapi import FastAPI, Request
 
 app = FastAPI()
@@ -11,7 +11,7 @@ app = FastAPI()
 async def main(request: Request) -> Any:
     payload = await request.json()
 
-    tests_havent_changed = github_validator_repo(payload)
+    tests_havent_changed = validator(payload)
     return tests_havent_changed
 
 
