@@ -43,6 +43,7 @@ requests = ">=2.22.0"
 PyGithub = ">=1.55"
 cryptography = ">=36.0.1"
 urllib3 = ">=1.26.5"
+gspread = "^5.4.0"
 
 [tool.poetry.dev-dependencies]
 darglint = ">=1.8.0"
