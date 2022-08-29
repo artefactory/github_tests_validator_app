@@ -1,5 +1,7 @@
 from typing import Any, List
 
+import logging
+
 from github import ContentFile, Github, Repository
 from lib.user import GitHubUser
 from lib.utils import get_hash_files
@@ -11,16 +13,16 @@ class GitHubConnector:
         self.REPO_NAME = repo_name
         self.BRANCH_NAME = branch_name
 
-        print(f"Connecting to Github with user {self.user.LOGIN} on repo: {repo_name} ...")
+        logging.info(f"Connecting to Github with user {self.user.LOGIN} on repo: {repo_name} ...")
         self.connector = Github(login_or_token=self.user.ACCESS_TOKEN, timeout=30)
         self.repo = self.connector.get_repo(f"{self.user.LOGIN}/{repo_name}")
-        print("Done.")
+        logging.info("Done.")
 
     def get_repo(self, repo_name: str) -> Repository.Repository:
         self.REPO_NAME = repo_name
-        print(f"Connecting to new repo: {repo_name} with user: {self.user.LOGIN} ...")
+        logging.info(f"Connecting to new repo: {repo_name} with user: {self.user.LOGIN} ...")
         self.repo = self.connector.get_repo(f"{self.user.LOGIN}/{repo_name}")
-        print("Done.")
+        logging.info("Done.")
         return self.repo
 
     def get_last_hash_commit(self) -> str:

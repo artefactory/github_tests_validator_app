@@ -1,11 +1,18 @@
 from typing import Any, Dict
 
+import logging
+
 from bin.github_validator_repo import (
     get_student_github_connector,
     get_trigger,
     github_validator_repo,
 )
-from config import SOLUTION_OWNER, SOLUTION_REPO_NAME, SOLUTION_TESTS_ACCESS_TOKEN, default_message
+from config.config import (
+    SOLUTION_OWNER,
+    SOLUTION_REPO_NAME,
+    SOLUTION_TESTS_ACCESS_TOKEN,
+    default_message,
+)
 from lib.connectors.github_connector import GitHubConnector
 from lib.connectors.google_sheet_connector import GSheet
 from lib.user import GitHubUser
@@ -34,7 +41,7 @@ def validator(payload: Dict[str, Any]) -> Any:
         gsheet.add_new_repo_valid_result(
             student_user, False, "[ERROR]: cannot get the student github repository."
         )
-        print("[ERROR]: cannot get the student github repository.")
+        logging.error("[ERROR]: cannot get the student github repository.")
         return
 
     solution_github_connector = GitHubConnector(solution_user, SOLUTION_REPO_NAME, "main")
@@ -42,7 +49,7 @@ def validator(payload: Dict[str, Any]) -> Any:
         gsheet.add_new_repo_valid_result(
             student_user, False, "[ERROR]: cannot get the solution github repository."
         )
-        print("[ERROR]: cannot get the solution github repository.")
+        logging.error("[ERROR]: cannot get the solution github repository.")
         return
 
     tests_havent_changed = github_validator_repo(

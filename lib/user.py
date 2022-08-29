@@ -3,7 +3,7 @@ from typing import Union
 from dataclasses import dataclass
 from datetime import datetime
 
-from config import git_integration
+from config.config import git_integration
 
 
 @dataclass

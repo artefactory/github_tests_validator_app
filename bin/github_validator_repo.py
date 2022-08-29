@@ -1,6 +1,8 @@
 from typing import Any, Dict, Union
 
-from config import TESTS_FOLDER_NAME
+import logging
+
+from config.config import TESTS_FOLDER_NAME
 from github import ContentFile
 from lib.connectors.github_connector import GitHubConnector
 from lib.user import GitHubUser
@@ -22,7 +24,7 @@ def get_student_branch(payload: Dict[str, Any], trigger: Union[str, None] = None
         # FIXME
         # Archive the payload
         # FIXME
-        print("Couldn't find the student branch, maybe the trigger is not managed")
+        logging.error("Couldn't find the student branch, maybe the trigger is not managed")
         return None
     path = triggers[trigger]
     branch = payload
