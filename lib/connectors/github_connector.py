@@ -12,14 +12,15 @@ class GitHubConnector:
         self.BRANCH_NAME = branch_name
 
         print(f"Connecting to Github with user {self.user.LOGIN} on repo: {repo_name} ...")
-        self.connector = Github(login_or_token=self.user.ACCESS_TOKEN)
-        print(f"Connecting to repo {repo_name} with user: {self.user.LOGIN} ...")
+        self.connector = Github(login_or_token=self.user.ACCESS_TOKEN, timeout=30)
         self.repo = self.connector.get_repo(f"{self.user.LOGIN}/{repo_name}")
+        print("Done.")
 
     def get_repo(self, repo_name: str) -> Repository.Repository:
         self.REPO_NAME = repo_name
         print(f"Connecting to new repo: {repo_name} with user: {self.user.LOGIN} ...")
         self.repo = self.connector.get_repo(f"{self.user.LOGIN}/{repo_name}")
+        print("Done.")
         return self.repo
 
     def get_last_hash_commit(self) -> str:

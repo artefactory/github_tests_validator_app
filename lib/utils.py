@@ -19,4 +19,4 @@ def get_github_user(data: Dict[str, Any]) -> GitHubUser:
     login = data["repository"]["owner"]["login"]
     id = data["repository"]["owner"]["id"]
     url = data["repository"]["owner"]["url"]
-    return GitHubUser(LOGIN=login, ID=id, URL=url)
+    return GitHubUser(LOGIN=login, ID=str(id), URL=url)

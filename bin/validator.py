@@ -1,48 +1,64 @@
 from typing import Any, Dict
 
-from bin.github_validator_repo import github_validator_repo
-from config import SOLUTION_OWNER, SOLUTION_REPO_NAME, SOLUTION_TESTS_ACCESS_TOKEN
+from bin.github_validator_repo import (
+    get_student_github_connector,
+    get_trigger,
+    github_validator_repo,
+)
+from config import SOLUTION_OWNER, SOLUTION_REPO_NAME, SOLUTION_TESTS_ACCESS_TOKEN, default_message
 from lib.connectors.github_connector import GitHubConnector
+from lib.connectors.google_sheet_connector import GSheet
 from lib.user import GitHubUser
 from lib.utils import get_github_user
 
-triggers = {"pull_request": ["pull_request", "head", "ref"], "pusher": ["ref"]}
-
-
-def get_trigger(payload: Dict[str, Any]) -> Any:
-    for trigger in triggers:
-        if trigger in payload:
-            return trigger
-    return None
-
-
-def get_student_branch(payload: Dict[str, Any]) -> Any:
-    trigger = get_trigger(payload)
-    path = triggers[trigger]
-    branch = payload
-    while path:
-        branch = branch[path.pop(0)]
-    return branch
-
 
 def validator(payload: Dict[str, Any]) -> Any:
+    # Init trigger
+    trigger = get_trigger(payload)
+    if trigger == "pull_request" and payload["action"] not in ["reopened", "opened"]:
+        return
 
-    # Init Data
-    student = get_github_user(payload)
-    github_student_branch = get_student_branch(payload)
-    if github_student_branch is None:
-        # Log error
-        # FIXME
-        # Archive the payload
-        # FIXME
-        # print("Could'nt find the student commit, maybe the trigger is not managed")
-        return False
+    # Init Google Sheet
+    gsheet = GSheet()
 
-    repo_name = payload["repository"]["name"]
-    student.get_access_token(repo_name)
-    student_github = GitHubConnector(student, repo_name, github_student_branch)
+    # Init GitHubUser
+    student_user = get_github_user(payload)
+    solution_user = GitHubUser(LOGIN=str(SOLUTION_OWNER), ACCESS_TOKEN=SOLUTION_TESTS_ACCESS_TOKEN)
 
-    solution_user = GitHubUser(LOGIN=SOLUTION_OWNER, ACCESS_TOKEN=SOLUTION_TESTS_ACCESS_TOKEN)
-    solution_github = GitHubConnector(solution_user, SOLUTION_REPO_NAME, "main")
-    tests_havent_changed = github_validator_repo(student_github, solution_github)
-    return tests_havent_changed
+    # Add user on Google Sheet
+    gsheet.add_new_user_on_sheet(student_user)
+
+    # Check valid repo
+    student_github_connector = get_student_github_connector(student_user, payload)
+    if not student_github_connector:
+        gsheet.add_new_repo_valid_result(
+            student_user, False, "[ERROR]: cannot get the student github repository."
+        )
+        print("[ERROR]: cannot get the student github repository.")
+        return
+
+    solution_github_connector = GitHubConnector(solution_user, SOLUTION_REPO_NAME, "main")
+    if not student_github_connector:
+        gsheet.add_new_repo_valid_result(
+            student_user, False, "[ERROR]: cannot get the solution github repository."
+        )
+        print("[ERROR]: cannot get the solution github repository.")
+        return
+
+    tests_havent_changed = github_validator_repo(
+        student_github_connector, solution_github_connector
+    )
+
+    # Add valid repo result on Google Sheet
+    gsheet.add_new_repo_valid_result(
+        student_user,
+        tests_havent_changed,
+        default_message["valid_repository"][str(tests_havent_changed)],
+    )
+
+    # Update Pull Request
+    if "pull_request" in payload:
+        issue = student_github_connector.repo.get_issue(number=payload["pull_request"]["number"])
+        issue.create_comment(default_message["valid_repository"][str(tests_havent_changed)])
+        if not tests_havent_changed:
+            issue.edit(state="closed")
