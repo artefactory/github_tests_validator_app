@@ -10,6 +10,8 @@ APP_KEY = cast(str, os.getenv("GH_APP_KEY"))
 SOLUTION_TESTS_ACCESS_TOKEN = cast(str, os.getenv("SOLUTION_TESTS_ACCESS_TOKEN"))
 SOLUTION_OWNER = "artefactory-fr"
 SOLUTION_REPO_NAME = "school_of_data_tests"
+
+# Also github workflow
 TESTS_FOLDER_NAME = "tests"
 
 git_integration = GithubIntegration(
@@ -28,3 +30,5 @@ default_message = {
         "False": "Your folder `Test` has been modified and is no longer valid.",
     }
 }
+
+commit_sha_path = {"pull_request": ["pull_request", "head", "ref"], "pusher": ["ref"]}

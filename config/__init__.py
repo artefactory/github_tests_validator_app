@@ -8,4 +8,5 @@ logging.basicConfig(
     datefmt=DATEFMT,
 )
 
-logging.getLogger("uvicorn").removeHandler(logging.getLogger("uvicorn").handlers[0])
+if logging.getLogger("uvicorn") and logging.getLogger("uvicorn").handlers:
+    logging.getLogger("uvicorn").removeHandler(logging.getLogger("uvicorn").handlers[0])

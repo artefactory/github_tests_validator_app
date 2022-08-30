@@ -1,24 +1,22 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 import logging
 
-from config.config import TESTS_FOLDER_NAME
+from config.config import TESTS_FOLDER_NAME, commit_sha_path
 from github import ContentFile
 from lib.connectors.github_connector import GitHubConnector
 from lib.user import GitHubUser
 
-triggers = {"pull_request": ["pull_request", "head", "ref"], "pusher": ["ref"]}
-
 
 def get_trigger(payload: Dict[str, Any]) -> Any:
-    for trigger in triggers:
+    for trigger in commit_sha_path:
         if trigger in payload:
             return trigger
     return None
 
 
 def get_student_branch(payload: Dict[str, Any], trigger: Union[str, None] = None) -> Any:
-    trigger = get_trigger(payload) if not trigger else None
+    trigger = get_trigger(payload) if not trigger else trigger
     if not trigger:
         # Log error
         # FIXME
@@ -26,16 +24,30 @@ def get_student_branch(payload: Dict[str, Any], trigger: Union[str, None] = None
         # FIXME
         logging.error("Couldn't find the student branch, maybe the trigger is not managed")
         return None
-    path = triggers[trigger]
+
+    path = commit_sha_path[trigger].copy()
     branch = payload
     while path:
-        branch = branch[path.pop(0)]
+
+        try:
+            branch = branch[path.pop(0)]
+        except KeyError as key_err:
+            logging.error(key_err)
+            return None
+        except Exception as err:
+            logging.error(err)
+            return None
+
     return branch
 
 
 def get_student_github_connector(
     student: GitHubUser, payload: Dict[str, Any]
-) -> Union[bool, GitHubConnector]:
+) -> Union[GitHubConnector, None]:
+
+    if student is None:
+        return None
+
     github_student_branch = get_student_branch(payload)
     if github_student_branch is None:
         return None
