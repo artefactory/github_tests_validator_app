@@ -36,16 +36,18 @@ class GSheet:
             worksheet.append_row(new_row)
             logging.info("Done.")
 
-    def add_new_repo_valid_result(self, user: GitHubUser, result: bool, info: str = "") -> None:
-        # Controle the workseet exist of not
+    def add_new_repo_valid_result(
+        self, user: GitHubUser, action: str, result: bool, info: str = ""
+    ) -> None:
         worksheet = self.spreadsheet.worksheet("check_validation_repo")
-
         headers = worksheet.row_values(1)
         user_dict = user.__dict__
         new_row = list()
         for header in headers:
             if header == "is_valid":
                 new_row.append(str(result))
+            elif header == "action":
+                new_row.append(action)
             elif header == "user_id":
                 new_row.append(user.ID)
             elif header == "info":

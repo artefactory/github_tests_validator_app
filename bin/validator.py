@@ -22,7 +22,9 @@ from lib.utils import get_github_user
 def validator(payload: Dict[str, Any]) -> Any:
     # Init trigger
     trigger = get_trigger(payload)
-    if trigger == "pull_request" and payload["action"] not in ["reopened", "opened"]:
+    if not trigger or (
+        trigger == "pull_request" and payload["action"] not in ["reopened", "opened"]
+    ):
         return
 
     # Init Google Sheet
@@ -39,7 +41,10 @@ def validator(payload: Dict[str, Any]) -> Any:
     student_github_connector = get_student_github_connector(student_user, payload)
     if not student_github_connector:
         gsheet.add_new_repo_valid_result(
-            student_user, False, "[ERROR]: cannot get the student github repository."
+            student_user,
+            "Connect to student repository",
+            False,
+            "[ERROR]: cannot get the student github repository.",
         )
         logging.error("[ERROR]: cannot get the student github repository.")
         return
@@ -47,7 +52,10 @@ def validator(payload: Dict[str, Any]) -> Any:
     solution_github_connector = GitHubConnector(solution_user, SOLUTION_REPO_NAME, "main")
     if not student_github_connector:
         gsheet.add_new_repo_valid_result(
-            student_user, False, "[ERROR]: cannot get the solution github repository."
+            student_user,
+            "Connect to school_of_data_tests repository",
+            False,
+            "[ERROR]: cannot get the solution github repository.",
         )
         logging.error("[ERROR]: cannot get the solution github repository.")
         return
@@ -59,6 +67,7 @@ def validator(payload: Dict[str, Any]) -> Any:
     # Add valid repo result on Google Sheet
     gsheet.add_new_repo_valid_result(
         student_user,
+        "Check the test folder",
         tests_havent_changed,
         default_message["valid_repository"][str(tests_havent_changed)],
     )
@@ -66,6 +75,12 @@ def validator(payload: Dict[str, Any]) -> Any:
     # Update Pull Request
     if "pull_request" in payload:
         issue = student_github_connector.repo.get_issue(number=payload["pull_request"]["number"])
-        issue.create_comment(default_message["valid_repository"][str(tests_havent_changed)])
-        if not tests_havent_changed:
-            issue.edit(state="closed")
+        message = default_message["valid_repository"][str(tests_havent_changed)]
+        issue.create_comment(message)
+        conclusion = "success" if tests_havent_changed else "failure"
+        student_github_connector.repo.create_check_run(
+            name=message,
+            head_sha=payload["pull_request"]["head"]["sha"],
+            status="completed",
+            conclusion=conclusion,
+        )

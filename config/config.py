@@ -24,7 +24,7 @@ GSHEET_WORKSHEET_ID = "1tzn73q_QhZ2gLAmZObRsE_JmD6yD6433uZBGc-Llsdk"
 # Others
 default_message = {
     "valid_repository": {
-        "True": "Validation of the repository `school_of_data_tests`",
-        "False": "The repository `school_of_data_tests` does not seem to be the correct version.",
+        "True": "Your folder `Test` is valid",
+        "False": "Your folder `Test` has been modified and is no longer valid.",
     }
 }
