@@ -2,8 +2,8 @@ from unittest.mock import PropertyMock
 
 import pytest
 from github import ContentFile
-from lib.user import GitHubUser
-from lib.utils import get_hash_files, init_github_user_from_github_event
+from github_tests_validator_app.lib.users import GitHubUser
+from github_tests_validator_app.lib.utils import get_hash_files, init_github_user_from_github_event
 
 
 @pytest.mark.parametrize(
@@ -18,12 +18,14 @@ from lib.utils import get_hash_files, init_github_user_from_github_event
     ],
 )
 def test_get_hast_files(mocker, contents, expected):
+    mocker.patch("github.ContentFile.ContentFile.__init__", return_value=None)
     mocker.patch(
         "github.ContentFile.ContentFile.sha",
         new_callable=PropertyMock,
         side_effect=contents,
     )
-    assert get_hash_files([ContentFile.ContentFile for _ in contents]) == expected
+    contents = [ContentFile.ContentFile for _ in contents]
+    assert get_hash_files(contents) == expected
 
 
 @pytest.mark.parametrize(
@@ -34,8 +36,8 @@ def test_get_hast_files(mocker, contents, expected):
             GitHubUser(LOGIN="test", ID="1234", URL="url"),
         ),
         (
-            {"repository": {"owner": {"login": None, "id": None, "url": None}}},
-            GitHubUser(LOGIN=None, ID=None, URL=None),
+            {"repository": {"owner": {"login": "", "id": "", "url": ""}}},
+            GitHubUser(LOGIN="", ID="", URL=""),
         ),
         ({}, None),
     ],

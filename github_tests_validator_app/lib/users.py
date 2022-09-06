@@ -3,13 +3,13 @@ from typing import Union
 from dataclasses import dataclass
 from datetime import datetime
 
-from config.config import git_integration
+from github_tests_validator_app.config.config import git_integration
 
 
 @dataclass
 class GitHubUser:
 
-    LOGIN: str
+    LOGIN: str = ""
     URL: str = ""
     ID: str = ""
     ACCESS_TOKEN: Union[str, None] = None

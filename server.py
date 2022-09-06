@@ -1,8 +1,8 @@
 from typing import Any
 
 import uvicorn
-from bin.validator import validator
 from fastapi import FastAPI, Request
+from github_tests_validator_app.bin.github_event_process import validator
 
 app = FastAPI()
 

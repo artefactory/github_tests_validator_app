@@ -1,6 +1,5 @@
 import pytest
-from github_tests_validator_app.github_repo_validation import get_event, get_student_branch
-from lib.user import GitHubUser
+from github_tests_validator_app.bin.github_repo_validation import get_event, get_student_branch
 
 
 @pytest.mark.parametrize(
