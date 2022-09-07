@@ -26,11 +26,23 @@ git_integration = GithubIntegration(
 
 # Google Sheet
 GSHEET_SA_JSON = cast(str, os.getenv("GSHEET_SA_JSON"))
-GSHEET_SPREADSHEET_ID = "1tzn73q_QhZ2gLAmZObRsE_JmD6yD6433uZBGc-Llsdk"
+GSHEET_SUMMARY_SPREADSHEET_ID = "1tzn73q_QhZ2gLAmZObRsE_JmD6yD6433uZBGc-Llsdk"
 GSHEET_WORKSHEET_STUDENT = "students"
 GSHEET_WORKSHEET_CHECK_VALIDATION_REPO = "check_validation_repo"
 GSHEET_WORKSHEET_STUDENT_CHALLENGE_RESULT = "student_challenge_results"
-GSHEET_WORKSHEET_STUDENT_CHALLENGE_REF = "student_challenge_ref"
+
+GSHEET_DETAILS_SPREADSHEET_ID = "1pnRYrVngqtgdiMPXleS3EdLs4GY5jCTAJNSIXQofFH0"
+GSHEET_HEADER_DETAILS_SPREADSHEET = [
+    "login",
+    "workflow_run_id",
+    "created_at",
+    "file_path",
+    "script_name",
+    "test_name",
+    "outcome",
+    "challenge_id",
+    "info",
+]
 
 # Others
 default_message: Dict[str, Dict[str, str]] = {
@@ -46,4 +58,5 @@ commit_sha_path: Dict[str, List[str]] = {
     "workflow_job": [],
 }
 
-CHALLENGES_PATH = "tests/tests/"
+CHALLENGE_DIR = "tests/tests/"
+DATE_FORMAT = "%d/%m/%Y %H:%M:%S"

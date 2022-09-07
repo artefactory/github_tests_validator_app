@@ -1,18 +1,24 @@
 from typing import Any
 
+import logging
+import traceback
+
 import uvicorn
 from fastapi import FastAPI, Request
-from github_tests_validator_app.bin.github_event_process import validator
+from github_tests_validator_app.bin.github_event_process import run
 
 app = FastAPI()
 
 
 @app.post("/")
-async def main(request: Request) -> Any:
-    payload = await request.json()
+async def main(request: Request):
 
-    tests_havent_changed = validator(payload)
-    return tests_havent_changed
+    try:
+        payload = await request.json()
+        run(payload)
+    except:
+        formatted_exception = traceback.format_exc()
+        logging.error(formatted_exception)
 
 
 if __name__ == "__main__":

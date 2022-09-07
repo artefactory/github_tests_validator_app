@@ -3,14 +3,16 @@ from typing import Any, Dict, List, Tuple, Union
 import logging
 from collections import defaultdict
 
-from github_tests_validator_app.config.config import CHALLENGES_PATH
+from github_tests_validator_app.config.config import CHALLENGE_DIR
 from github_tests_validator_app.lib.connectors.github_connector import GitHubConnector
 from github_tests_validator_app.lib.connectors.google_sheet_connector import GSheet
 from github_tests_validator_app.lib.pytest_result import PytestResult
 from github_tests_validator_app.lib.users import GitHubUser
 
 
-def init_pytest_result_from_artifact(artifact: Dict[str, Any]) -> Union[PytestResult, None]:
+def init_pytest_result_from_artifact(
+    artifact: Dict[str, Any], workflow_run_id: int
+) -> Union[PytestResult, None]:
     if not artifact:
         return None
 
@@ -22,6 +24,7 @@ def init_pytest_result_from_artifact(artifact: Dict[str, Any]) -> Union[PytestRe
         TOTAL_PASSED=artifact["summary"]["passed"],
         TOTAL_FAILED=artifact["summary"]["failed"],
         DESCRIPTION_TEST_RESULTS=artifact["tests"],
+        WORKFLOW_RUN_ID=workflow_run_id,
     )
 
 
@@ -63,47 +66,40 @@ def get_student_artifact(
     return artifact
 
 
-def get_challenge_information_from_path(path: str) -> Tuple[str, str, str]:
-    list_path_name = path.split(CHALLENGES_PATH)[1].split("/")
-    challenge_id = "-".join([name[0:2] for name in list_path_name if not ".py" in name])
-    challenge_name = path[-1].split(".py")[0].split("test_")[1]
-    test_name = path[-1].split("::")[1]
-    return challenge_name, challenge_id, test_name
+def get_test_information(path: str) -> Tuple[str, str, str, str]:
+
+    list_path_name = path.split("::")
+    file_path = list_path_name[0]
+    script_name = list_path_name[0].split("/")[-1]
+    test_name = list_path_name[1]
+    challenge_id = "-".join(
+        [
+            name[:2]
+            for name in list_path_name[0].split(CHALLENGE_DIR)[1].split("/")
+            if ".py" not in name
+        ]
+    )
+    return challenge_id, file_path, script_name, test_name
 
 
 def parsing_challenge_results(results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
-    # challenge_results = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(str)))))
     challenge_results = []
     for test in results:
-        challenge_name, challenge_id, test_name = get_challenge_information_from_path(
-            test["nodeid"]
-        )
-        # if challenge_id in challenges_ref and challenge_name in challenges_ref[challenge_id]['name']:
-        # challenge_results[challenge_id][challenge_name]["coef"] = challenges_ref[challenge_id]["coef"]
-        # challenge_results[challenge_id][challenge_name]["tests"][test_name]["result"] = 1 if test.pop("outcome") == "passed" else 0
-
-        # challenge_results[challenge_id][challenge_name]["tests"][test_name]["result"] = test.pop("outcome")
-        # challenge_results[challenge_id][challenge_name]["tests"][test_name]["setup"] = test["setup"]
-        # challenge_results[challenge_id][challenge_name]["tests"][test_name]["call"] = test["call"]
-        # challenge_results[challenge_id][challenge_name]["tests"][test_name]["teardown"] = test["teardown"]
-        info = {"setup": test["setup"], "call": test["call"], "teardown": test["teardown"]}
-
+        challenge_id, file_path, script_name, test_name = get_test_information(test["nodeid"])
         challenge_results.append(
             {
-                "id": challenge_id,
-                "script": challenge_name,
-                "test": test_name,
-                "info": info,
-                "result": test["outcome"],
-                "path": test["nodeid"],
+                "file_path": file_path,
+                "script_name": script_name,
+                "test_name": test_name,
+                "challenge_id": challenge_id,
+                "outcome": test["outcome"],
+                "setup": test["setup"],
+                "call": test["call"],
+                "teardown": test["teardown"],
             }
         )
 
-    # list_id = challenges_ref.keys() - challenge_results.keys()
-    # for challenge_id in list_id:
-    #     challenge_results[challenge_id][challenge_name]["coef"] = challenges_ref[challenge_id]["coef"]
-    # breakpoint()
     return challenge_results
 
 
@@ -149,18 +145,23 @@ def send_student_challenge_results(
         # Logging error
         return
 
-    ### Parsing artifact / challenge results
-    challenge_results = parsing_challenge_results(artifact["tests"])
-    ### Get final results of student challenge results
-    # final_result = get_final_results_challenges(challenge_results)
-
-    # Get result
-    pytest_result = init_pytest_result_from_artifact(artifact)
+    # Get resultxw
+    pytest_result = init_pytest_result_from_artifact(artifact, payload["workflow_job"]["run_id"])
     ## Send Results to Google Sheet
-    gsheet.add_new_student_challenge_result(
+    gsheet.add_new_student_result_summary(
         user=student_github_connector.user,
         result=pytest_result,
         info="Result of student tests",
     )
+
+    ### Parsing artifact / challenge results
+    challenge_results = parsing_challenge_results(artifact["tests"])
+    gsheet.add_new_student_results_detail(
+        user=student_github_connector.user,
+        results=challenge_results,
+        workflow_run_id=payload["workflow_job"]["run_id"],
+    )
+    ### Get final results of student challenge results
+    # final_result = get_final_results_challenges(challenge_results)
 
     ### Delete artifact ?

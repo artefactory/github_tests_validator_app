@@ -16,11 +16,11 @@ from github_tests_validator_app.lib.connectors.google_sheet_connector import GSh
 from github_tests_validator_app.lib.users import GitHubUser
 
 
-def get_event(payload: Dict[str, Any]) -> Any:
+def get_event(payload: Dict[str, Any]) -> str:
     for event in commit_sha_path:
         if event in payload:
             return event
-    return None
+    return ""
 
 
 def get_student_branch(payload: Dict[str, Any], trigger: Union[str, None] = None) -> Any:

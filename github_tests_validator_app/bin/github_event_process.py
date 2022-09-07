@@ -21,7 +21,19 @@ process = {
 }
 
 
-def validator(payload: Dict[str, Any]) -> Any:
+def handle_process(payload: Dict[str, Any]) -> str:
+    # Get event
+    event = get_event(payload)
+    if (
+        not event
+        or (event == "pull_request" and payload["action"] not in ["reopened", "opened"])
+        or (event == "workflow_job" and payload["action"] not in ["completed"])
+    ):
+        return ""
+    return event
+
+
+def run(payload: Dict[str, Any]) -> Any:
     """
     Validator function
 
@@ -31,13 +43,9 @@ def validator(payload: Dict[str, Any]) -> Any:
     Returns:
         None: Return nothing
     """
-    # Get event
-    event = get_event(payload)
-    if (
-        not event
-        or (event == "pull_request" and payload["action"] not in ["reopened", "opened"])
-        or (event == "workflow_job" and payload["action"] not in ["completed"])
-    ):
+
+    event = handle_process(payload)
+    if not event:
         return
 
     # Init Google Sheet
