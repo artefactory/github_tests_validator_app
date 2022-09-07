@@ -6,22 +6,45 @@ import logging
 import zipfile
 
 import requests
-from github import ContentFile, Github, Repository
-from github_tests_validator_app.config.config import GH_ALL_ARTIFACT_ENDPOINT, GH_API
+from github import ContentFile, Github, GithubIntegration, Repository
+from github_tests_validator_app.config.config import (
+    GH_ALL_ARTIFACT_ENDPOINT,
+    GH_API,
+    GH_APP_ID,
+    GH_APP_KEY_PATH,
+)
 from github_tests_validator_app.lib.users import GitHubUser
 from github_tests_validator_app.lib.utils import get_hash_files
 
 
 class GitHubConnector:
-    def __init__(self, user: GitHubUser, repo_name: str, branch_name: str):
+    def __init__(self, user: GitHubUser, repo_name: str, branch_name: str, access_token: str = ""):
         self.user = user
         self.REPO_NAME = repo_name
         self.BRANCH_NAME = branch_name
+        self.ACCESS_TOKEN = access_token
 
         logging.info(f"Connecting to Github with user {self.user.LOGIN} on repo: {repo_name} ...")
-        self.connector = Github(login_or_token=self.user.ACCESS_TOKEN, timeout=30)
+        if not access_token:
+            self.set_git_integration()
+            self.set_access_token(repo_name)
+        self.connector = Github(login_or_token=self.ACCESS_TOKEN, timeout=30)
         self.repo = self.connector.get_repo(f"{self.user.LOGIN}/{repo_name}")
         logging.info("Done.")
+
+    def set_git_integration(self) -> None:
+
+        with open(GH_APP_KEY_PATH) as f:
+            GH_APP_KEY = f.read()
+            self.git_integration = GithubIntegration(
+                GH_APP_ID,
+                GH_APP_KEY,
+            )
+
+    def set_access_token(self, repo_name: str) -> None:
+        self.ACCESS_TOKEN = self.git_integration.get_access_token(
+            self.git_integration.get_installation(self.user.LOGIN, repo_name).id
+        ).token
 
     def get_repo(self, repo_name: str) -> Repository.Repository:
         self.REPO_NAME = repo_name
@@ -88,12 +111,12 @@ class GitHubConnector:
         return response
 
     def _get_headers(self) -> Dict[str, str]:
-        if not self.user.ACCESS_TOKEN:
-            self.user.get_access_token(self.REPO_NAME)
+        if not self.ACCESS_TOKEN:
+            self.set_access_token(self.REPO_NAME)
 
         return {
             "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {self.user.ACCESS_TOKEN}",
+            "Authorization": f"Bearer {self.ACCESS_TOKEN}",
         }
 
     def _request_data(

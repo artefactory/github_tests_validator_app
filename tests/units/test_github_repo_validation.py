@@ -5,8 +5,8 @@ from github_tests_validator_app.bin.github_repo_validation import get_event, get
 @pytest.mark.parametrize(
     "payload,expected",
     [
-        ({}, None),
-        ({"unkown": "unkown"}, None),
+        ({}, ""),
+        ({"unkown": "unkown"}, ""),
         ({"pull_request": "test"}, "pull_request"),
         ({"pusher": "test"}, "pusher"),
     ],

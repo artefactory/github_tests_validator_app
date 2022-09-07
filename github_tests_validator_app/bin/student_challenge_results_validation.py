@@ -5,7 +5,7 @@ from collections import defaultdict
 
 from github_tests_validator_app.config.config import CHALLENGE_DIR
 from github_tests_validator_app.lib.connectors.github_connector import GitHubConnector
-from github_tests_validator_app.lib.connectors.google_sheet_connector import GSheet
+from github_tests_validator_app.lib.connectors.gsheet import GSheetConnector
 from github_tests_validator_app.lib.pytest_result import PytestResult
 from github_tests_validator_app.lib.users import GitHubUser
 
@@ -30,7 +30,7 @@ def init_pytest_result_from_artifact(
 
 def get_student_artifact(
     student_github_connector: GitHubConnector,
-    gsheet: GSheet,
+    gsheet: GSheetConnector,
     all_student_artifact: Dict[str, Any],
     payload: Dict[str, Any],
 ) -> Any:
@@ -122,7 +122,7 @@ def get_final_results_challenges(challenge_results: Any) -> float:
 
 
 def send_student_challenge_results(
-    student_github_connector: GitHubConnector, gsheet: GSheet, payload: Dict[str, Any]
+    student_github_connector: GitHubConnector, gsheet: GSheetConnector, payload: Dict[str, Any]
 ) -> None:
 
     ### Get student artifact
@@ -145,23 +145,20 @@ def send_student_challenge_results(
         # Logging error
         return
 
-    # Get resultxw
+    # Get summary student results
     pytest_result = init_pytest_result_from_artifact(artifact, payload["workflow_job"]["run_id"])
-    ## Send Results to Google Sheet
+    # Send summary student results to Google Sheet
     gsheet.add_new_student_result_summary(
         user=student_github_connector.user,
         result=pytest_result,
         info="Result of student tests",
     )
 
-    ### Parsing artifact / challenge results
+    # Parsing artifact / challenge results
     challenge_results = parsing_challenge_results(artifact["tests"])
-    gsheet.add_new_student_results_detail(
+    # Send new detail results to Google Sheet
+    gsheet.add_new_student_detail_results(
         user=student_github_connector.user,
         results=challenge_results,
         workflow_run_id=payload["workflow_job"]["run_id"],
     )
-    ### Get final results of student challenge results
-    # final_result = get_final_results_challenges(challenge_results)
-
-    ### Delete artifact ?

@@ -10,7 +10,7 @@ from github_tests_validator_app.bin.github_repo_validation import (
 from github_tests_validator_app.bin.student_challenge_results_validation import (
     send_student_challenge_results,
 )
-from github_tests_validator_app.lib.connectors.google_sheet_connector import GSheet
+from github_tests_validator_app.lib.connectors.gsheet import GSheetConnector
 from github_tests_validator_app.lib.users import GitHubUser
 from github_tests_validator_app.lib.utils import init_github_user_from_github_event
 
@@ -49,7 +49,7 @@ def run(payload: Dict[str, Any]) -> Any:
         return
 
     # Init Google Sheet
-    gsheet = GSheet()
+    gsheet = GSheetConnector()
 
     # Init GitHubUser
     student_user = init_github_user_from_github_event(payload)
@@ -72,4 +72,6 @@ def run(payload: Dict[str, Any]) -> Any:
         return
 
     logging.info(f"Begin {event} process...")
+    # Run the process
     process[event](student_github_connector, gsheet, payload)
+    logging.info(f"END of {event} process.")

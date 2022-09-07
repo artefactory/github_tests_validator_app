@@ -1,4 +1,4 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict, List, Union
 
 import logging
 
@@ -8,12 +8,17 @@ from github_tests_validator_app.config.config import (
     GH_SOLUTION_REPO_NAME,
     GH_SOLUTION_TESTS_ACCESS_TOKEN,
     GH_TESTS_FOLDER_NAME,
-    commit_sha_path,
     default_message,
 )
 from github_tests_validator_app.lib.connectors.github_connector import GitHubConnector
-from github_tests_validator_app.lib.connectors.google_sheet_connector import GSheet
+from github_tests_validator_app.lib.connectors.gsheet import GSheetConnector
 from github_tests_validator_app.lib.users import GitHubUser
+
+commit_sha_path: Dict[str, List[str]] = {
+    "pull_request": ["pull_request", "head", "ref"],
+    "pusher": ["ref"],
+    "workflow_job": [],
+}
 
 
 def get_event(payload: Dict[str, Any]) -> str:
@@ -60,9 +65,7 @@ def get_student_github_connector(
     if github_student_branch is None:
         return None
 
-    repo_name = payload["repository"]["name"]
-    student.get_access_token(repo_name)
-    return GitHubConnector(student, repo_name, github_student_branch)
+    return GitHubConnector(student, payload["repository"]["name"], github_student_branch)
 
 
 def compare_tests_folder(student_github: GitHubConnector, solution_repo: GitHubConnector) -> Any:
@@ -85,13 +88,16 @@ def compare_tests_folder(student_github: GitHubConnector, solution_repo: GitHubC
 
 
 def github_repo_validation(
-    student_github_connector: GitHubConnector, gsheet: GSheet, payload: Dict[str, Any]
+    student_github_connector: GitHubConnector, gsheet: GSheetConnector, payload: Dict[str, Any]
 ) -> None:
 
-    solution_user = GitHubUser(
-        LOGIN=str(GH_SOLUTION_OWNER), ACCESS_TOKEN=GH_SOLUTION_TESTS_ACCESS_TOKEN
+    solution_user = GitHubUser(LOGIN=str(GH_SOLUTION_OWNER))
+    solution_github_connector = GitHubConnector(
+        user=solution_user,
+        repo_name=GH_SOLUTION_REPO_NAME,
+        branch_name="main",
+        access_token=GH_SOLUTION_TESTS_ACCESS_TOKEN,
     )
-    solution_github_connector = GitHubConnector(solution_user, GH_SOLUTION_REPO_NAME, "main")
     if not solution_github_connector:
         gsheet.add_new_repo_valid_result(
             solution_user,
