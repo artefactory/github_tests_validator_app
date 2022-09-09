@@ -12,7 +12,7 @@ from github_tests_validator_app.config.config import (
 )
 from github_tests_validator_app.lib.connectors.github_connector import GitHubConnector
 from github_tests_validator_app.lib.connectors.gsheet import GSheetConnector
-from github_tests_validator_app.lib.users import GitHubUser
+from github_tests_validator_app.lib.models.users import GitHubUser
 
 commit_sha_path: Dict[str, List[str]] = {
     "pull_request": ["pull_request", "head", "ref"],

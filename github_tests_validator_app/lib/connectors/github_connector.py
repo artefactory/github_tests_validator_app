@@ -13,7 +13,7 @@ from github_tests_validator_app.config.config import (
     GH_APP_ID,
     GH_APP_KEY_PATH,
 )
-from github_tests_validator_app.lib.users import GitHubUser
+from github_tests_validator_app.lib.models.users import GitHubUser
 from github_tests_validator_app.lib.utils import get_hash_files
 
 
@@ -87,7 +87,7 @@ class GitHubConnector:
                 return artifact
         return None
 
-    def get_artifact_from_format_bytes_zip(self, artifact_content: bytes) -> Any:
+    def get_artifact_from_format_zip_bytes(self, artifact_content: bytes) -> Any:
         z = zipfile.ZipFile(io.BytesIO(artifact_content))
         f = z.read(z.namelist()[0])
         decode = f.decode("utf-8")

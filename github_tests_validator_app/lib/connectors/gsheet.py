@@ -5,25 +5,57 @@ import logging
 
 import gspread
 from github_tests_validator_app.config.config import (
-    GSHEET_DETAILS_SPREADSHEET_ID,
-    GSHEET_HEADER_DETAILS_SPREADSHEET,
     GSHEET_SA_JSON,
-    GSHEET_SUMMARY_SPREADSHEET_ID,
     GSHEET_WORKSHEET_CHECK_VALIDATION_REPO,
     GSHEET_WORKSHEET_STUDENT,
     GSHEET_WORKSHEET_STUDENT_CHALLENGE_RESULT,
 )
-from github_tests_validator_app.lib.pytest_result import PytestResult
-from github_tests_validator_app.lib.users import GitHubUser
+from github_tests_validator_app.lib.models.file import GSheetDetailFile, GSheetFile
+from github_tests_validator_app.lib.models.pytest_result import PytestResult
+from github_tests_validator_app.lib.models.users import GitHubUser
 
 
 class GSheetConnector:
-    def __init__(self):
+    def __init__(self, gsheet_summary_file: GSheetFile, gsheet_details_file: GSheetDetailFile):
+        self.gsheet_summary_file = gsheet_summary_file
+        self.gsheet_details_file = gsheet_details_file
+
         logging.info(f"Connecting to Google Sheet API ...")
         self.gs_client = gspread.service_account(filename=GSHEET_SA_JSON)
-        self.summary_spreadsheet = self.gs_client.open_by_key(GSHEET_SUMMARY_SPREADSHEET_ID)
-        self.detail_spreadsheet = self.gs_client.open_by_key(GSHEET_DETAILS_SPREADSHEET_ID)
         logging.info("Done.")
+
+        logging.info(f"Init spreadsheet ...")
+        self.summary_spreadsheet = self.init_spreadsheet(gsheet_summary_file)
+        self.detail_spreadsheet = self.gs_client.open_by_key(gsheet_details_file.ID)
+        logging.info(f"Done.")
+
+    def add_worksheet(
+        self, spreadsheet: gspread.spreadsheet.Spreadsheet, title: str, headers: List[str]
+    ) -> gspread.worksheet.Worksheet:
+
+        new_worksheet = spreadsheet.add_worksheet(title=title, rows=1, cols=1)
+        new_worksheet.insert_row(headers)
+        return new_worksheet
+
+    def init_spreadsheet(self, gsheet_file: GSheetFile) -> gspread.spreadsheet.Spreadsheet:
+
+        spreadsheet = self.gs_client.open_by_key(gsheet_file.ID)
+        all_worksheets = spreadsheet.worksheets()
+        all_worksheets_name = [worksheet.title for worksheet in all_worksheets]
+
+        # Init all worksheets
+        for worksheet in gsheet_file.WORKSHEETS:
+
+            if worksheet.NAME in all_worksheets_name:
+                continue
+
+            if all_worksheets and all_worksheets[0].title == "Sheet1":
+                new_worksheet = all_worksheets.pop(0)
+                new_worksheet.update_title(worksheet.NAME)
+                new_worksheet.insert_row(worksheet.HEADERS)
+            else:
+                self.add_worksheet(spreadsheet, worksheet.NAME, worksheet.HEADERS)
+        return spreadsheet
 
     def add_new_user_on_sheet(self, user: GitHubUser) -> None:
         # Controle the workseet exist of not
@@ -74,11 +106,10 @@ class GSheetConnector:
     ) -> None:
         worksheet = self.summary_spreadsheet.worksheet(GSHEET_WORKSHEET_STUDENT_CHALLENGE_RESULT)
         headers = worksheet.row_values(1)
-        user_dict = user.__dict__
         result_dict = {k.lower(): v for k, v in result.__dict__.items()}
         user_dict = {k.lower(): v for k, v in user.__dict__.items()}
-
         data = {**user_dict, **result_dict}
+
         new_row = self.dict_to_row(headers, data, to_str=True, info=info)
         worksheet.append_row(new_row)
 
@@ -100,7 +131,7 @@ class GSheetConnector:
             student_worksheet = self.detail_spreadsheet.add_worksheet(
                 title=user.LOGIN, rows=1, cols=1
             )
-            student_worksheet.insert_row(GSHEET_HEADER_DETAILS_SPREADSHEET)
+            student_worksheet.insert_row(self.gsheet_details_file.HEADERS)
 
         headers = student_worksheet.row_values(1)
         user_dict = {k.lower(): v for k, v in user.__dict__.items()}

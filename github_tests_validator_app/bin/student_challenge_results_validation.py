@@ -6,8 +6,8 @@ from collections import defaultdict
 from github_tests_validator_app.config.config import CHALLENGE_DIR
 from github_tests_validator_app.lib.connectors.github_connector import GitHubConnector
 from github_tests_validator_app.lib.connectors.gsheet import GSheetConnector
-from github_tests_validator_app.lib.pytest_result import PytestResult
-from github_tests_validator_app.lib.users import GitHubUser
+from github_tests_validator_app.lib.models.pytest_result import PytestResult
+from github_tests_validator_app.lib.models.users import GitHubUser
 
 
 def init_pytest_result_from_artifact(
@@ -16,13 +16,11 @@ def init_pytest_result_from_artifact(
     if not artifact:
         return None
 
-    # Get result of test
-
     return PytestResult(
         DURATION=artifact["duration"],
         TOTAL_TESTS_COLLECTED=artifact["summary"]["collected"],
-        TOTAL_PASSED=artifact["summary"]["passed"],
-        TOTAL_FAILED=artifact["summary"]["failed"],
+        TOTAL_PASSED_TEST=artifact["summary"]["passed"],
+        TOTAL_FAILED_TEST=artifact["summary"]["failed"],
         DESCRIPTION_TEST_RESULTS=artifact["tests"],
         WORKFLOW_RUN_ID=workflow_run_id,
     )
@@ -34,6 +32,7 @@ def get_student_artifact(
     all_student_artifact: Dict[str, Any],
     payload: Dict[str, Any],
 ) -> Any:
+
     workflow_run_id = payload["workflow_job"]["run_id"]
     artifact_info = student_github_connector.get_artifact_info_from_artifacts_with_worflow_run_id(
         all_student_artifact["artifacts"], workflow_run_id
@@ -49,9 +48,9 @@ def get_student_artifact(
         )
         return None
 
-    ### Read Artifact
+    # Read Artifact
     artifact_resp = student_github_connector.get_artifact(artifact_info)
-    artifact = student_github_connector.get_artifact_from_format_bytes_zip(artifact_resp.content)
+    artifact = student_github_connector.get_artifact_from_format_zip_bytes(artifact_resp.content)
     if not artifact:
         gsheet.add_new_student_challenge_result(
             user=student_github_connector.user,
@@ -103,29 +102,11 @@ def parsing_challenge_results(results: List[Dict[str, Any]]) -> List[Dict[str, A
     return challenge_results
 
 
-def get_final_results_challenges(challenge_results: Any) -> float:
-
-    final_results = 0.0
-    total_test = 0
-
-    for challenge_id in challenge_results:
-        for challenge_info in challenge_results[challenge_id].values():
-            total_test += challenge_info["coef"]
-            passed = sum(test["result"] for test in challenge_info["tests"].values()) / len(
-                challenge_info["tests"]
-            )
-            passed = passed * challenge_info["coef"]
-            final_results += passed
-
-    final_results /= total_test
-    return final_results
-
-
 def send_student_challenge_results(
     student_github_connector: GitHubConnector, gsheet: GSheetConnector, payload: Dict[str, Any]
 ) -> None:
 
-    ### Get student artifact
+    # Get all artifacts
     all_student_artifact = student_github_connector.get_all_artifacts()
     if not all_student_artifact:
         message = f"[ERROR]: Cannot get all artifact on repository {student_github_connector.REPO_NAME} of user {student_github_connector.user.LOGIN}."
@@ -139,9 +120,16 @@ def send_student_challenge_results(
         logging.error(message)
         return
 
+    # Get student artifact
     artifact = get_student_artifact(student_github_connector, gsheet, all_student_artifact, payload)
-    # challenges_ref = gsheet.get_challenge_coef()
     if not artifact:
+        message = f"[ERROR]: Cannot get student artifact on repository {student_github_connector.REPO_NAME} of user {student_github_connector.user.LOGIN}."
+        gsheet.add_new_student_challenge_result(
+            user=student_github_connector.user,
+            result={},
+            info=message,
+        )
+        logging.error(message)
         # Logging error
         return
 
