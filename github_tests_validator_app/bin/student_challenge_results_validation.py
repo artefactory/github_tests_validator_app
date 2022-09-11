@@ -1,13 +1,11 @@
 from typing import Any, Dict, List, Tuple, Union
 
 import logging
-from collections import defaultdict
 
 from github_tests_validator_app.config.config import CHALLENGE_DIR
 from github_tests_validator_app.lib.connectors.github_connector import GitHubConnector
 from github_tests_validator_app.lib.connectors.gsheet import GSheetConnector
 from github_tests_validator_app.lib.models.pytest_result import PytestResult
-from github_tests_validator_app.lib.models.users import GitHubUser
 
 
 def init_pytest_result_from_artifact(
@@ -38,9 +36,9 @@ def get_student_artifact(
         all_student_artifact["artifacts"], workflow_run_id
     )
     if not artifact_info:
-        gsheet.add_new_student_challenge_result(
+        gsheet.add_new_student_result_summary(
             user=student_github_connector.user,
-            result={},
+            result=PytestResult(),
             info="[ERROR]: Cannot find the artifact of Pytest result on GitHub user repository.",
         )
         logging.error(
@@ -52,9 +50,9 @@ def get_student_artifact(
     artifact_resp = student_github_connector.get_artifact(artifact_info)
     artifact = student_github_connector.get_artifact_from_format_zip_bytes(artifact_resp.content)
     if not artifact:
-        gsheet.add_new_student_challenge_result(
+        gsheet.add_new_student_result_summary(
             user=student_github_connector.user,
-            result={},
+            result=PytestResult(),
             info="[ERROR]: Cannot read the artifact of Pytest result on GitHub user repository.",
         )
         logging.error(
@@ -112,7 +110,7 @@ def send_student_challenge_results(
         message = f"[ERROR]: Cannot get all artifact on repository {student_github_connector.REPO_NAME} of user {student_github_connector.user.LOGIN}."
         if all_student_artifact["total_count"] == 0:
             message = f"[ERROR]: No artifact on repository {student_github_connector.REPO_NAME} of user {student_github_connector.user.LOGIN}."
-        gsheet.add_new_student_challenge_result(
+        gsheet.add_new_student_result_summary(
             user=student_github_connector.user,
             result={},
             info=message,
@@ -123,14 +121,6 @@ def send_student_challenge_results(
     # Get student artifact
     artifact = get_student_artifact(student_github_connector, gsheet, all_student_artifact, payload)
     if not artifact:
-        message = f"[ERROR]: Cannot get student artifact on repository {student_github_connector.REPO_NAME} of user {student_github_connector.user.LOGIN}."
-        gsheet.add_new_student_challenge_result(
-            user=student_github_connector.user,
-            result={},
-            info=message,
-        )
-        logging.error(message)
-        # Logging error
         return
 
     # Get summary student results

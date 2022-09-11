@@ -35,7 +35,13 @@ def handle_process(payload: Dict[str, Any]) -> str:
     if (
         not event
         or (event == "pull_request" and payload["action"] not in ["reopened", "opened"])
-        or (event == "workflow_job" and payload["action"] not in ["completed"])
+        or (
+            event == "workflow_job"
+            and (
+                payload["action"] not in ["completed"]
+                or payload["workflow_job"]["conclusion"] != "success"
+            )
+        )
     ):
         return ""
     return event
@@ -125,4 +131,4 @@ def run(payload: Dict[str, Any]) -> Any:
     logging.info(f"Begin {event} process...")
     # Run the process
     process[event](student_github_connector, gsheet, payload)
-    logging.info(f"END of {event} process.")
+    logging.info(f"End of {event} process.")
