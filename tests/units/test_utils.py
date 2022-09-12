@@ -2,7 +2,7 @@ from unittest.mock import PropertyMock
 
 import pytest
 from github import ContentFile
-from github_tests_validator_app.lib.users import GitHubUser
+from github_tests_validator_app.lib.models.users import GitHubUser
 from github_tests_validator_app.lib.utils import get_hash_files, init_github_user_from_github_event
 
 
