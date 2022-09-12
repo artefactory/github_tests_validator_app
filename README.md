@@ -14,7 +14,11 @@
 [![Documentation](https://img.shields.io/badge/doc-sphinx-informational.svg)](https://github.com/artefactory/github_tests_validator_app}/tree/main/docs)
 [![License](https://img.shields.io/badge/License-MIT-informational.svg)](https://github.com/artefactory/github_tests_validator_app}/blob/main/LICENSE)
 
-`github_tests_validator_app` is a Python cli/package
+
+![github_tests_validator_app](https://user-images.githubusercontent.com/43343135/189366228-0fc9dc7e-6e04-49cc-ab23-8afba630a0a4.png)
+
+
+`github_tests_validator_app` is a GitHub application you can deploy in order to validate the integrity of the `tests/` and `.github/` folders from github forked repositories.
 
 </div>
 
