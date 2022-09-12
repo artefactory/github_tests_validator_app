@@ -1,0 +1,45 @@
+---
+gdrive_summary_spreadsheet:
+  name: "Student challenge results"
+  worksheets:
+    student:
+        name: students
+        headers:
+          - login
+          - url
+          - id
+          - created_at
+    check_validation_repo:
+        name: check_validation_repo
+        headers:
+          - login
+          - user_id
+          - is_valid
+          - created_at
+          - info
+    student_challenge_results:
+        name: student_challenge_results
+        headers:
+          - login
+          - workflow_run_id
+          - created_at
+          - total_tests_collected
+          - total_passed_test
+          - total_failed_test
+          - duration
+          - info
+
+gsheet_details_spreadsheet:
+  name: Details
+  headers:
+    - login
+    - workflow_run_id
+    - created_at
+    - file_path
+    - script_name
+    - test_name
+    - outcome
+    - challenge_id
+    - setup
+    - call
+    - teardown

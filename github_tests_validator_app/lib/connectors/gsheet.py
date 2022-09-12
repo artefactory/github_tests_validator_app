@@ -4,12 +4,7 @@ import json
 import logging
 
 import gspread
-from github_tests_validator_app.config.config import (
-    GSHEET_SA_JSON,
-    GSHEET_WORKSHEET_CHECK_VALIDATION_REPO,
-    GSHEET_WORKSHEET_STUDENT,
-    GSHEET_WORKSHEET_STUDENT_CHALLENGE_RESULT,
-)
+from github_tests_validator_app.config.config import GDRIVE_SUMMARY_SPREADSHEET, GSHEET_SA_JSON
 from github_tests_validator_app.lib.models.file import GSheetDetailFile, GSheetFile
 from github_tests_validator_app.lib.models.pytest_result import PytestResult
 from github_tests_validator_app.lib.models.users import GitHubUser
@@ -59,7 +54,9 @@ class GSheetConnector:
 
     def add_new_user_on_sheet(self, user: GitHubUser) -> None:
         # Controle the workseet exist of not
-        worksheet = self.summary_spreadsheet.worksheet(GSHEET_WORKSHEET_STUDENT)
+        worksheet = self.summary_spreadsheet.worksheet(
+            GDRIVE_SUMMARY_SPREADSHEET["worksheets"]["student"]["name"]
+        )
 
         # Check is user exist
         id_cell = worksheet.find(str(user.ID))
@@ -93,7 +90,9 @@ class GSheetConnector:
         return result
 
     def add_new_repo_valid_result(self, user: GitHubUser, result: bool, info: str = "") -> None:
-        worksheet = self.summary_spreadsheet.worksheet(GSHEET_WORKSHEET_CHECK_VALIDATION_REPO)
+        worksheet = self.summary_spreadsheet.worksheet(
+            GDRIVE_SUMMARY_SPREADSHEET["worksheets"]["check_validation_repo"]["name"]
+        )
         headers = worksheet.row_values(1)
         user_dict = {k.lower(): v for k, v in user.__dict__.items()}
         new_row = self.dict_to_row(
@@ -104,7 +103,9 @@ class GSheetConnector:
     def add_new_student_result_summary(
         self, user: GitHubUser, result: PytestResult, info: str = ""
     ) -> None:
-        worksheet = self.summary_spreadsheet.worksheet(GSHEET_WORKSHEET_STUDENT_CHALLENGE_RESULT)
+        worksheet = self.summary_spreadsheet.worksheet(
+            GDRIVE_SUMMARY_SPREADSHEET["worksheets"]["student_challenge_results"]["name"]
+        )
         headers = worksheet.row_values(1)
         result_dict = {k.lower(): v for k, v in result.__dict__.items()}
         user_dict = {k.lower(): v for k, v in user.__dict__.items()}

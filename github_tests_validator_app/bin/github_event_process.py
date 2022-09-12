@@ -51,14 +51,14 @@ def init_gsheet_file(
     google_drive: GoogleDriveConnector, info: Dict[str, Any], parent_id: str, user_share: str
 ) -> GSheetFile:
 
-    gsheet = google_drive.get_gsheet(info["NAME"], parent_id, user_share)
+    gsheet = google_drive.get_gsheet(info["name"], parent_id, user_share)
 
     list_worksheets = [
-        WorkSheetFile(NAME=worksheet["NAME"], HEADERS=worksheet["HEADERS"])
-        for worksheet in info["WORKSHEETS"]
+        WorkSheetFile(NAME=worksheet["name"], HEADERS=worksheet["headers"])
+        for _, worksheet in info["worksheets"].items()
     ]
     return GSheetFile(
-        NAME=info["NAME"],
+        NAME=info["name"],
         MIMETYPE=gsheet.get("mimeType", ""),
         ID=gsheet.get("id", ""),
         WORKSHEETS=list_worksheets,
@@ -69,12 +69,12 @@ def init_gsheet_detail_file(
     google_drive: GoogleDriveConnector, info: Dict[str, Any], parent_id: str, user_share: str
 ) -> GSheetDetailFile:
 
-    gsheet = google_drive.get_gsheet(info["NAME"], parent_id, user_share)
+    gsheet = google_drive.get_gsheet(info["name"], parent_id, user_share)
     return GSheetDetailFile(
-        NAME=info["NAME"],
+        NAME=info["name"],
         MIMETYPE=gsheet.get("mimeType", ""),
         ID=gsheet.get("id", ""),
-        HEADERS=info["HEADERS"],
+        HEADERS=info["headers"],
     )
 
 
@@ -128,7 +128,7 @@ def run(payload: Dict[str, Any]) -> Any:
         logging.error("[ERROR]: cannot get the student github repository.")
         return
 
-    logging.info(f"Begin {event} process...")
+    logging.info(f'Begin process: "{event}"...')
     # Run the process
     process[event](student_github_connector, gsheet, payload)
-    logging.info(f"End of {event} process.")
+    logging.info(f'End of process: "{event}".')

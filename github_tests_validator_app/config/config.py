@@ -2,6 +2,8 @@ from typing import Dict, cast
 
 import os
 
+import yaml
+
 # GitHub
 GH_APP_ID = cast(str, os.getenv("GH_APP_ID", None))
 GH_APP_KEY_PATH = os.getenv("GH_APP_KEY", "")
@@ -18,48 +20,12 @@ GDRIVE_MAIN_DIRECTORY_NAME = "school_of_data_results"
 
 # Google Sheet
 GSHEET_SA_JSON = cast(str, os.getenv("GSHEET_SA_JSON", None))
-GSHEET_WORKSHEET_STUDENT = "students"
-GSHEET_WORKSHEET_CHECK_VALIDATION_REPO = "check_validation_repo"
-GSHEET_WORKSHEET_STUDENT_CHALLENGE_RESULT = "student_challenge_results"
-GDRIVE_SUMMARY_SPREADSHEET = {
-    "NAME": "Student challenge results",
-    "WORKSHEETS": [
-        {"NAME": GSHEET_WORKSHEET_STUDENT, "HEADERS": ["login", "url", "id", "created_at"]},
-        {
-            "NAME": GSHEET_WORKSHEET_CHECK_VALIDATION_REPO,
-            "HEADERS": ["login", "user_id", "is_valid", "created_at", "info"],
-        },
-        {
-            "NAME": GSHEET_WORKSHEET_STUDENT_CHALLENGE_RESULT,
-            "HEADERS": [
-                "login",
-                "workflow_run_id",
-                "created_at",
-                "total_tests_collected",
-                "total_passed_test",
-                "total_failed_test",
-                "duration",
-                "info",
-            ],
-        },
-    ],
-}
-GSHEET_DETAILS_SPREADSHEET = {
-    "NAME": "Details",
-    "HEADERS": [
-        "login",
-        "workflow_run_id",
-        "created_at",
-        "file_path",
-        "script_name",
-        "test_name",
-        "outcome",
-        "challenge_id",
-        "setup",
-        "call",
-        "teardown",
-    ],
-}
+GDRIVE_HIERARCHY_APTH = "github_tests_validator_app/config/data/gdrive_hierarchy.yml"
+with open(GDRIVE_HIERARCHY_APTH) as file:
+    data = yaml.safe_load(file)
+
+GDRIVE_SUMMARY_SPREADSHEET = data["gdrive_summary_spreadsheet"]
+GSHEET_DETAILS_SPREADSHEET = data["gsheet_details_spreadsheet"]
 
 # Log message
 default_message: Dict[str, Dict[str, str]] = {
