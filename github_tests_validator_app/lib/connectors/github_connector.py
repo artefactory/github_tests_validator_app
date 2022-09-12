@@ -18,7 +18,13 @@ from github_tests_validator_app.lib.utils import get_hash_files
 
 
 class GitHubConnector:
-    def __init__(self, user: GitHubUser, repo_name: str, branch_name: str, access_token: str = ""):
+    def __init__(
+        self,
+        user: GitHubUser,
+        repo_name: str,
+        branch_name: str,
+        access_token: Union[str, None] = None,
+    ):
         self.user = user
         self.REPO_NAME = repo_name
         self.BRANCH_NAME = branch_name
