@@ -15,13 +15,11 @@ GH_API = "https://api.github.com/repos"
 GH_ALL_ARTIFACT_ENDPOINT = "actions/artifacts"
 
 # Google Drive
-GDRIVE_CREDENTIALS_PATH = "credentials.json"
 GDRIVE_MAIN_DIRECTORY_NAME = "school_of_data_results"
 
 # Google Sheet
-GSHEET_SA_JSON = cast(str, os.getenv("GSHEET_SA_JSON", None))
-GDRIVE_HIERARCHY_APTH = "github_tests_validator_app/config/data/gdrive_hierarchy.yml"
-with open(GDRIVE_HIERARCHY_APTH) as file:
+GDRIVE_HIERARCHY_PATH = "github_tests_validator_app/config/data/gdrive_hierarchy.yml"
+with open(GDRIVE_HIERARCHY_PATH) as file:
     data = yaml.safe_load(file)
 
 GDRIVE_SUMMARY_SPREADSHEET = data["gdrive_summary_spreadsheet"]
@@ -38,4 +36,4 @@ default_message: Dict[str, Dict[str, str]] = {
 # Common
 CHALLENGE_DIR = "tests/tests/"
 DATE_FORMAT = "%d/%m/%Y %H:%M:%S"
-USER_SHARE = os.getenv("USER_SHARE", "")
+USER_SHARE = os.getenv("USER_SHARE", "").split(",")

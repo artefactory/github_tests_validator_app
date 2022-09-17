@@ -1,42 +1,48 @@
 from typing import Any, Dict, List
 
-import json
 import logging
+from readline import set_completion_display_matches_hook
 
-from github_tests_validator_app.config.config import GDRIVE_CREDENTIALS_PATH
-from google.oauth2 import service_account
-from googleapiclient.discovery import Resource, build
-
-SCOPES = ["https://www.googleapis.com/auth/drive"]
+from google.auth import default
+from googleapiclient.discovery import build
 
 
 class GoogleDriveConnector:
     def __init__(self):
-
-        self.creds_path = GDRIVE_CREDENTIALS_PATH
-        self.creds_file = json.load(open(self.creds_path))
-
         logging.info(f"Connecting to Google Drive API ...")
-        self.creds = service_account.Credentials.from_service_account_info(
-            self.creds_file, scopes=SCOPES
-        )
-        self.drive_api = build("drive", "v3", credentials=self.creds)
+        self.credentials = self._get_credentials()
+        self.client = self._get_client()
         logging.info(f"Done.")
 
-    def get_all_folder(self) -> Any:
+    def _get_credentials(self):
+        credentials, _ = default(
+            scopes=[
+                "https://www.googleapis.com/auth/drive",
+            ]
+        )
+        return credentials
+
+    def _get_client(self):
+        return build("drive", "v3", credentials=self.credentials)
+
+    def search_folder(self, folder_name: str) -> Any:
         """Get all folders from a google drive.
         ...
         :return: All folders informations.
         :rtype: Any
         """
         results = (
-            self.drive_api.files()
-            .list(q="mimeType = 'application/vnd.google-apps.folder'", spaces="drive")
+            self.client.files()
+            .list(
+                q=f"name = '{folder_name}' and (mimeType = 'application/vnd.google-apps.folder')",
+                spaces="drive",
+                fields="files(id, name, mimeType, permissions)",
+            )
             .execute()
         )
         return results.get("files", [])
 
-    def get_all_file(self, parent_folder_ids: str = "") -> Any:
+    def get_all_file(self, file_name: str, parent_folder_ids: str = "") -> Any:
         """Get all files from a folder on Google Drive.
         :param parent_folder_ids: Folder ID.
         ...
@@ -45,13 +51,13 @@ class GoogleDriveConnector:
         """
         query = ""
         if parent_folder_ids:
-            query = f"parents in '{parent_folder_ids}'"
+            query = f"name = '{file_name}'"
         response = (
-            self.drive_api.files()
+            self.client.files()
             .list(
                 q=query,
                 spaces="drive",
-                fields="nextPageToken, files(id, name, mimeType)",
+                fields="files(id, name, mimeType, permissions)",
                 pageToken=None,
             )
             .execute()
@@ -69,9 +75,8 @@ class GoogleDriveConnector:
         file_metadata = {"name": folder_name, "mimeType": "application/vnd.google-apps.folder"}
 
         # pylint: disable=maybe-no-member
-        folder = self.drive_api.files().create(body=file_metadata, fields="id").execute()
-        id = folder.get("id")
-        logging.info(f'Folder {folder_name} has created with ID: "{id}".')
+        folder = self.client.files().create(body=file_metadata).execute()
+        logging.info(f'Folder {folder["name"]} has created with ID: "{folder["id"]}".')
         return folder
 
     def share_file(self, real_file_id: str, user_email: str) -> List[Any]:
@@ -92,16 +97,24 @@ class GoogleDriveConnector:
             else:
                 ids.append(response.get("id"))
 
-        batch = self.drive_api.new_batch_http_request(callback=callback)
+        batch = self.client.new_batch_http_request(callback=callback)
         user_permission = {"type": "user", "role": "writer", "emailAddress": user_email}
         batch.add(
-            self.drive_api.permissions().create(fileId=file_id, body=user_permission, fields="id")
+            self.client.permissions().create(fileId=file_id, body=user_permission, fields="id")
         )
         batch.execute()
 
         return ids
 
-    def get_gdrive_folder(self, folder_name: str, user_share: str) -> Any:
+    def share_file_from_users(self, file_info: Dict[str, Any], users: List[str] = []) -> None:
+        if not users:
+            return
+        user_shared = [user["emailAddress"] for user in file_info.get("permissions", [])]
+        new_shared_users = list(set(users) - set(user_shared))
+        for user in new_shared_users:
+            self.share_file(file_info["id"], user)
+
+    def get_gdrive_folder(self, folder_name: str, shared_user_list: List[str] = []) -> Any:
         """Get the folder information in google drive.
         .. note ::
             If the folder doesn't exist, it will create a new one.
@@ -111,23 +124,20 @@ class GoogleDriveConnector:
         :return: informations of the folder
         :rtype: Any
         """
-        list_dir = self.get_all_folder()
-        for dir in list_dir:
-            if dir["name"] == folder_name:
-                return dir
+        list_folder = self.search_folder(folder_name)
+        for folder in list_folder:
+            if folder.get("name", None) == folder_name:
+                if shared_user_list:
+                    self.share_file_from_users(folder, shared_user_list)
+                return folder
 
         folder = self.create_folder(folder_name)
-        if "id" in folder:
-            self.share_file(folder["id"], user_share)
-        return {
-            "name": folder_name,
-            "id": folder["id"],
-            "kind": "drive#file",
-            "mimeType": "application/vnd.google-apps.folder",
-        }
+        if "id" in folder and shared_user_list:
+            self.share_file_from_users(folder, shared_user_list)
+        return folder
 
     def get_gsheet(
-        self, gsheet_name: str, parent_folder_ids: str = "", user_share: str = ""
+        self, gsheet_name: str, parent_folder_ids: str = "", shared_user_list: List[str] = []
     ) -> Any:
         """Get the google sheet information.
         .. note ::
@@ -139,22 +149,23 @@ class GoogleDriveConnector:
         :return: informations of the google sheet
         :rtype: Any
         """
-        list_file = self.get_all_file(parent_folder_ids)
+        list_file = self.get_all_file(gsheet_name, parent_folder_ids)
         for file in list_file:
             if file["name"] == gsheet_name and "spreadsheet" in file["mimeType"]:
+                if shared_user_list:
+                    self.share_file_from_users(file, shared_user_list)
                 return file
         file = self.create_google_file(
-            self.drive_api,
             gsheet_name,
             "application/vnd.google-apps.spreadsheet",
             [parent_folder_ids],
         )
-        if user_share:
-            self.share_file(file["id"], user_share)
+        if shared_user_list:
+            self.share_file_from_users(file, shared_user_list)
         return file
 
     def create_google_file(
-        self, drive_api: Resource, title: str, mimeType: str, parent_folder_ids: List[str] = []
+        self, title: str, mimeType: str, parent_folder_ids: List[str] = []
     ) -> Any:
         """Create a new file on Google drive.
         .. note ::
@@ -170,12 +181,8 @@ class GoogleDriveConnector:
             "name": title,
             "mimeType": mimeType,
         }
-
         if parent_folder_ids:
             body["parents"] = parent_folder_ids
-
-        req = drive_api.files().create(body=body)
+        req = self.client.files().create(body=body)
         new_sheet = req.execute()
-
-        # Get id of fresh sheet
         return new_sheet

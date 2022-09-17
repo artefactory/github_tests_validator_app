@@ -4,19 +4,26 @@ import json
 import logging
 
 import gspread
-from github_tests_validator_app.config.config import GDRIVE_SUMMARY_SPREADSHEET, GSHEET_SA_JSON
+from github_tests_validator_app.config.config import GDRIVE_SUMMARY_SPREADSHEET
 from github_tests_validator_app.lib.models.file import GSheetDetailFile, GSheetFile
 from github_tests_validator_app.lib.models.pytest_result import PytestResult
 from github_tests_validator_app.lib.models.users import GitHubUser
+from google.oauth2.service_account import Credentials
 
 
 class GSheetConnector:
-    def __init__(self, gsheet_summary_file: GSheetFile, gsheet_details_file: GSheetDetailFile):
+    def __init__(
+        self,
+        credentials: Credentials,
+        gsheet_summary_file: GSheetFile,
+        gsheet_details_file: GSheetDetailFile,
+    ):
+        breakpoint()
         self.gsheet_summary_file = gsheet_summary_file
         self.gsheet_details_file = gsheet_details_file
 
         logging.info(f"Connecting to Google Sheet API ...")
-        self.gs_client = gspread.service_account(filename=GSHEET_SA_JSON)
+        self.gs_client = gspread.authorize(credentials)
         logging.info("Done.")
 
         logging.info(f"Init spreadsheet ...")

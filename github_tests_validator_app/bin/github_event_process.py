@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import logging
 
@@ -48,11 +48,13 @@ def handle_process(payload: Dict[str, Any]) -> str:
 
 
 def init_gsheet_file(
-    google_drive: GoogleDriveConnector, info: Dict[str, Any], parent_id: str, user_share: str
+    google_drive: GoogleDriveConnector,
+    info: Dict[str, Any],
+    parent_id: str,
+    shared_user_list: List[str],
 ) -> GSheetFile:
 
-    gsheet = google_drive.get_gsheet(info["name"], parent_id, user_share)
-
+    gsheet = google_drive.get_gsheet(info["name"], parent_id, shared_user_list)
     list_worksheets = [
         WorkSheetFile(NAME=worksheet["name"], HEADERS=worksheet["headers"])
         for _, worksheet in info["worksheets"].items()
@@ -66,7 +68,7 @@ def init_gsheet_file(
 
 
 def init_gsheet_detail_file(
-    google_drive: GoogleDriveConnector, info: Dict[str, Any], parent_id: str, user_share: str
+    google_drive: GoogleDriveConnector, info: Dict[str, Any], parent_id: str, user_share: List[str]
 ) -> GSheetDetailFile:
 
     gsheet = google_drive.get_gsheet(info["name"], parent_id, user_share)
@@ -94,19 +96,19 @@ def run(payload: Dict[str, Any]) -> Any:
         return
 
     # Init Google Drive connector and folders
-    googe_drive = GoogleDriveConnector()
-    folder_school_of_data = googe_drive.get_gdrive_folder(GDRIVE_MAIN_DIRECTORY_NAME, USER_SHARE)
+    google_drive = GoogleDriveConnector()
+    folder_school_of_data = google_drive.get_gdrive_folder(GDRIVE_MAIN_DIRECTORY_NAME, USER_SHARE)
 
     # Init Google sheets
     gsheet_summary_file = init_gsheet_file(
-        googe_drive, GDRIVE_SUMMARY_SPREADSHEET, folder_school_of_data["id"], USER_SHARE
+        google_drive, GDRIVE_SUMMARY_SPREADSHEET, folder_school_of_data["id"], USER_SHARE
     )
     gsheet_details_file = init_gsheet_detail_file(
-        googe_drive, GSHEET_DETAILS_SPREADSHEET, folder_school_of_data["id"], USER_SHARE
+        google_drive, GSHEET_DETAILS_SPREADSHEET, folder_school_of_data["id"], USER_SHARE
     )
 
     # Init Google sheet connector and worksheets
-    gsheet = GSheetConnector(gsheet_summary_file, gsheet_details_file)
+    gsheet = GSheetConnector(google_drive.credentials, gsheet_summary_file, gsheet_details_file)
 
     # Init GitHubUser
     student_user = init_github_user_from_github_event(payload)
