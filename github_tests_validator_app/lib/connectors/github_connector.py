@@ -8,11 +8,13 @@ import zipfile
 import requests
 from github import ContentFile, Github, GithubIntegration, Repository
 from github_tests_validator_app.config.config import (
+    GCP_PROJECT_ID,
     GH_ALL_ARTIFACT_ENDPOINT,
     GH_API,
     GH_APP_ID,
-    GH_APP_KEY_PATH,
+    GH_APP_KEY_NAME,
 )
+from github_tests_validator_app.lib.connectors.google_secret_manager import GSecretManager
 from github_tests_validator_app.lib.models.users import GitHubUser
 from github_tests_validator_app.lib.utils import get_hash_files
 
@@ -40,12 +42,13 @@ class GitHubConnector:
 
     def set_git_integration(self) -> None:
 
-        with open(GH_APP_KEY_PATH) as f:
-            GH_APP_KEY = f.read()
-            self.git_integration = GithubIntegration(
-                GH_APP_ID,
-                GH_APP_KEY,
-            )
+        gsecret_manager = GSecretManager(GCP_PROJECT_ID)
+        github_app_key = gsecret_manager.get_access_secret_version(GH_APP_KEY_NAME)
+
+        self.git_integration = GithubIntegration(
+            GH_APP_ID,
+            github_app_key,
+        )
 
     def set_access_token(self, repo_name: str) -> None:
         self.ACCESS_TOKEN = self.git_integration.get_access_token(

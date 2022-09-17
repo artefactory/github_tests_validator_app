@@ -6,7 +6,7 @@ from datetime import datetime
 
 from github import ContentFile
 from github_tests_validator_app.config.config import DATE_FORMAT
-from github_tests_validator_app.lib.connectors.gsheet import GSheetConnector
+from github_tests_validator_app.lib.connectors.google_sheet import GSheetConnector
 from github_tests_validator_app.lib.models.users import GitHubUser
 
 

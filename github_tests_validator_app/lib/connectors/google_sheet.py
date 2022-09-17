@@ -18,7 +18,6 @@ class GSheetConnector:
         gsheet_summary_file: GSheetFile,
         gsheet_details_file: GSheetDetailFile,
     ):
-        breakpoint()
         self.gsheet_summary_file = gsheet_summary_file
         self.gsheet_details_file = gsheet_details_file
 

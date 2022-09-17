@@ -4,14 +4,16 @@ import logging
 
 from github import ContentFile
 from github_tests_validator_app.config.config import (
+    GCP_PROJECT_ID,
+    GH_ACCESS_TOKEN_NAME,
     GH_SOLUTION_OWNER,
     GH_SOLUTION_REPO_NAME,
-    GH_SOLUTION_TESTS_ACCESS_TOKEN,
     GH_TESTS_FOLDER_NAME,
     default_message,
 )
 from github_tests_validator_app.lib.connectors.github_connector import GitHubConnector
-from github_tests_validator_app.lib.connectors.gsheet import GSheetConnector
+from github_tests_validator_app.lib.connectors.google_secret_manager import GSecretManager
+from github_tests_validator_app.lib.connectors.google_sheet import GSheetConnector
 from github_tests_validator_app.lib.models.users import GitHubUser
 
 commit_sha_path: Dict[str, List[str]] = {
@@ -91,12 +93,15 @@ def github_repo_validation(
     student_github_connector: GitHubConnector, gsheet: GSheetConnector, payload: Dict[str, Any]
 ) -> None:
 
-    solution_user = GitHubUser(LOGIN=str(GH_SOLUTION_OWNER))
+    solution_user = GitHubUser(LOGIN=GH_SOLUTION_OWNER)
+    gsecret_manager = GSecretManager(GCP_PROJECT_ID)
+    acces_token = gsecret_manager.get_access_secret_version(GH_ACCESS_TOKEN_NAME)
+
     solution_github_connector = GitHubConnector(
         user=solution_user,
         repo_name=GH_SOLUTION_REPO_NAME,
         branch_name="main",
-        access_token=GH_SOLUTION_TESTS_ACCESS_TOKEN,
+        access_token=acces_token,
     )
     if not solution_github_connector:
         gsheet.add_new_repo_valid_result(

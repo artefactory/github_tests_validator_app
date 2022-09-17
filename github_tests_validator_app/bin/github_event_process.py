@@ -16,8 +16,8 @@ from github_tests_validator_app.config.config import (
     GSHEET_DETAILS_SPREADSHEET,
     USER_SHARE,
 )
-from github_tests_validator_app.lib.connectors.gddrive import GoogleDriveConnector
-from github_tests_validator_app.lib.connectors.gsheet import GSheetConnector
+from github_tests_validator_app.lib.connectors.google_drive import GoogleDriveConnector
+from github_tests_validator_app.lib.connectors.google_sheet import GSheetConnector
 from github_tests_validator_app.lib.models.file import GSheetDetailFile, GSheetFile, WorkSheetFile
 from github_tests_validator_app.lib.models.users import GitHubUser
 from github_tests_validator_app.lib.utils import init_github_user_from_github_event

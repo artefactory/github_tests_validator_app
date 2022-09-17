@@ -6,13 +6,18 @@ import yaml
 
 # GitHub
 GH_APP_ID = cast(str, os.getenv("GH_APP_ID", None))
-GH_APP_KEY_PATH = os.getenv("GH_APP_KEY", "")
-GH_SOLUTION_TESTS_ACCESS_TOKEN = cast(str, os.getenv("SOLUTION_TESTS_ACCESS_TOKEN", None))
 GH_SOLUTION_OWNER = "artefactory-fr"
 GH_SOLUTION_REPO_NAME = "school_of_data_tests"
 GH_TESTS_FOLDER_NAME = "tests"
 GH_API = "https://api.github.com/repos"
 GH_ALL_ARTIFACT_ENDPOINT = "actions/artifacts"
+
+# GCP
+GCP_PROJECT_ID = "school-of-data-github-app"
+
+# Google Secrets
+GH_APP_KEY_NAME = "github_test_validator_app_key"
+GH_ACCESS_TOKEN_NAME = "github_personal_access_token"
 
 # Google Drive
 GDRIVE_MAIN_DIRECTORY_NAME = "school_of_data_results"
