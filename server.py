@@ -1,6 +1,5 @@
-from typing import Any
-
 import logging
+import os
 import traceback
 
 import uvicorn
@@ -22,4 +21,4 @@ async def main(request: Request):
 
 
 if __name__ == "__main__":
-    uvicorn.run("server:app", host="127.0.0.1", port=5000, log_level="info")
+    uvicorn.run("server:app", host="0.0.0.0", port=os.environ.get("PORT", 8080), log_level="info")
