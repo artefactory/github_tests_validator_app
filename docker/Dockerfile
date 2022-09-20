@@ -16,7 +16,6 @@ WORKDIR /home/docker_user/workspace
 
 # Install Poetry
 RUN curl -sSL -o install-poetry.py https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py \
-  && echo '8bb6d1f65ed1f19fe500f8baf11328217459a30bd9d94fa5ec3bc9fc0fc345e7 install-poetry.py' | sha256sum --check \
   && POETRY_HOME=/home/docker_user/poetry python install-poetry.py --preview \
   && rm install-poetry.py
 
@@ -25,8 +24,8 @@ ENV PATH="${PATH}:/home/docker_user/.poetry/bin:/home/docker_user/poetry/bin"
 COPY pyproject.toml ./
 COPY poetry.lock ./
 
-RUN poetry install --no-root --no-dev
+RUN poetry install --no-root --only main
 
 COPY . /home/docker_user/workspace/
 
-ENTRYPOINT ["poetry", "run", "github_tests_validator_app"]
+CMD ["poetry", "run", "python3", "server.py"]

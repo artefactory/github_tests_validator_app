@@ -1,0 +1,30 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+  - 'build'
+  - '--tag'
+  - 'europe-west1-docker.pkg.dev/school-of-data-github-app/github-test-validator-app/github_test_validator_app_server:lastest'
+  - "--file=./docker/Dockerfile"
+  - '.'
+  id: Build Artifact
+- name: 'gcr.io/cloud-builders/gcloud'
+  args:
+  - 'run'
+  - 'deploy'
+  - 'github-test-validator-app-server'
+  - '--image'
+  - 'europe-west1-docker.pkg.dev/school-of-data-github-app/github-test-validator-app/github_test_validator_app_server:lastest'
+  - '--region'
+  - 'europe-west1'
+  - '--platform'
+  - 'managed'
+  - '--allow-unauthenticated'
+  - '--service-account=school-of-data-app-dev@school-of-data-github-app.iam.gserviceaccount.com'
+  - '--set-env-vars'
+  - 'GH_APP_ID=230621'
+  - '--set-env-vars'
+  - 'USER_SHARE=bruno.zheng@artefact.com'
+  - '--set-env-vars'
+  - 'ENV=PROD'
+images:
+- 'europe-west1-docker.pkg.dev/school-of-data-github-app/github-test-validator-app/github_test_validator_app_server:lastest'
