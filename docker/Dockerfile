@@ -1,4 +1,4 @@
-FROM python:3.9-slim-buster
+FROM --platform=linux/amd64 python:3.9-slim-buster 
 
 ENV LANG=C.UTF-8 \
   LC_ALL=C.UTF-8

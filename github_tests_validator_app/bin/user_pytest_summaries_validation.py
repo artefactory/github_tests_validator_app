@@ -107,7 +107,9 @@ def send_user_pytest_summaries(
 
     # Get user artifact
     artifact = get_user_artifact(user_github_connector, sql_client, all_user_artifact, payload)
+    # logging.info(f"User artifact: {artifact}")
     if not artifact:
+        logging.info("[ERROR]: Cannot get user artifact.")
         return
 
     # Send summary user results to Google Sheet
@@ -122,7 +124,8 @@ def send_user_pytest_summaries(
 
     # Parsing artifact / challenge results
     pytest_summaries = parsing_pytest_summaries(artifact["tests"])
-    # Send new detail results to Google Sheet
+    logging.info(f'Tests user artifact: {artifact["tests"]}')
+    # Send new results to Google Sheet
     sql_client.add_new_pytest_detail(
         repository=user_github_connector.REPO_NAME,
         branch=user_github_connector.BRANCH_NAME,

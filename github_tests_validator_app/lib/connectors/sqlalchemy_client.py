@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional
 
 import json
 import operator
+import logging
 from datetime import datetime
 from functools import reduce
 
@@ -78,8 +79,13 @@ class SQLAlchemyConnector:
     def add_new_user(self, user_data: Dict[str, Any]) -> None:
         user = User(**user_data)
         with Session(self.engine) as session:
-            session.add(user)
-            session.commit()
+            try:
+                # Use merge to handle insert or update
+                session.merge(user)
+                session.commit()
+            except Exception as e:
+                session.rollback()
+                raise e
 
     def add_new_repository_validation(
         self,
@@ -111,6 +117,7 @@ class SQLAlchemyConnector:
         branch: str,
         info: str,
     ) -> None:
+        logging.info(f"Adding new pytest summary ...")
         pytest_summary = WorkflowRun(
             id=workflow_run_id,
             organization_or_user=user_data["organization_or_user"],
@@ -124,8 +131,14 @@ class SQLAlchemyConnector:
             info=info,
         )
         with Session(self.engine) as session:
-            session.add(pytest_summary)
-            session.commit()
+            try:
+                session.add(pytest_summary)
+                session.commit()
+                logging.info("Pytest summary added successfully.")
+            except Exception as e:
+                session.rollback()
+                logging.error(f"Error adding pytest summary: {e}")
+                raise e
 
     def add_new_pytest_detail(
         self,
@@ -134,19 +147,26 @@ class SQLAlchemyConnector:
         results: List[Dict[str, Any]],
         workflow_run_id: int,
     ) -> None:
+        logging.info(f"Adding new pytest details...")
         with Session(self.engine) as session:
-            for test in results:
-                pytest_detail = WorkflowRunDetail(
-                    repository=repository,
-                    branch=branch,
-                    workflow_run_id=workflow_run_id,
-                    file_path=test["file_path"],
-                    test_name=test["test_name"],
-                    script_name=test["script_name"],
-                    outcome=test["outcome"],
-                    setup=json.dumps(test["setup"]),
-                    call=json.dumps(test["call"]),
-                    teardown=json.dumps(test["teardown"]),
-                )
-                session.add(pytest_detail)
-            session.commit()
+            try:
+                for test in results:
+                    pytest_detail = WorkflowRunDetail(
+                        repository=repository,
+                        branch=branch,
+                        workflow_run_id=workflow_run_id,
+                        file_path=test["file_path"],
+                        test_name=test["test_name"],
+                        script_name=test["script_name"],
+                        outcome=test["outcome"],
+                        setup=json.dumps(test["setup"]),
+                        call=json.dumps(test["call"]),
+                        teardown=json.dumps(test["teardown"]),
+                    )
+                    session.add(pytest_detail)
+                session.commit()
+                logging.info("Pytest details added successfully.")
+            except Exception as e:
+                session.rollback()
+                logging.error(f"Error adding pytest details: {e}")
+                raise e

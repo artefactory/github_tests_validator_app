@@ -54,8 +54,10 @@ def run(payload: Dict[str, Any]) -> None:
         return
 
     sql_client = SQLAlchemyConnector()
-
-    sql_client.add_new_user(user_data)
+    try:
+        sql_client.add_new_user(user_data)
+    except Exception as e:
+        logging.error(f"[ERROR]: {e}")
 
     # Check valid repo
     user_github_connector = get_user_github_connector(user_data, payload)

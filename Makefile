@@ -130,6 +130,7 @@ lint: test check-safety check-style
 docker:
 	@echo Building docker $(IMAGE):$(VERSION) ...
 	docker build \
+		--platform=linux/amd64 \
 		-t $(IMAGE):$(VERSION) . \
 		-f ./docker/Dockerfile
 
